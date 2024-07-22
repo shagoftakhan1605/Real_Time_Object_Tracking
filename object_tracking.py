@@ -18,6 +18,8 @@ def select_roi(event, x, y, flags, param):
 roi_selected = False
 roi_pts = []
 roi_box = None
+tracker = None
+trace_points = []
 
 # Video capture
 cap = cv2.VideoCapture(0)
@@ -31,24 +33,25 @@ while True:
     if not ret:
         break
 
-    if roi_selected and roi_box[2] > 0 and roi_box[3] > 0:
-        # Convert frame to HSV color space
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-        # Create a mask for the ROI
-        mask = cv2.inRange(hsv, np.array([0, 60, 32]), np.array([180, 255, 255]))
-
-        # Compute the histogram backprojection
-        roi_hist = cv2.calcHist([hsv], [0], mask, [180], [0, 180])
-        cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
-        back_proj = cv2.calcBackProject([hsv], [0], roi_hist, [0, 180], 1)
-
-        # Apply the mean shift algorithm
-        ret, roi_box = cv2.meanShift(back_proj, roi_box, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1))
-
-        # Draw the tracking result
-        x, y, w, h = roi_box
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    if roi_selected:
+        if tracker is None:
+            # Initialize the tracker with the selected ROI
+            tracker = cv2.TrackerCSRT_create()
+            tracker.init(frame, roi_box)
+        else:
+            # Update the tracker and get the updated position of the ROI
+            success, roi_box = tracker.update(frame)
+            if success:
+                x, y, w, h = [int(v) for v in roi_box]
+                center = (x + w // 2, y + h // 2)
+                trace_points.append(center)
+                # Draw the rectangle
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                # Draw the trace line
+                for i in range(1, len(trace_points)):
+                    cv2.line(frame, trace_points[i - 1], trace_points[i], (0, 255, 0), 2)
+            else:
+                cv2.putText(frame, 'Tracking failure detected', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
 
     # Display the frame
     cv2.imshow('Frame', frame)
@@ -59,6 +62,9 @@ while True:
     elif key == ord('r'):
         roi_selected = False
         roi_pts = []
+        roi_box = None
+        tracker = None
+        trace_points = []
 
 cap.release()
 cv2.destroyAllWindows()
