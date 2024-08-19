@@ -1,5 +1,5 @@
-# Real_Time_Object_Tracking
-This project demonstrates a real-time object tracking system using histogram backprojection and the mean shift algorithm. The system allows a user to select a region of interest (ROI) in a video stream, and then tracks that object as it moves within the frame.
+# Real_Time_Frame_Tracking
+This project demonstrates a real-time tracking system using histogram backprojection and the mean shift algorithm. The system allows a user to select a region of interest (ROI) in a video stream, and then tracks that object as it moves within the frame.
 
 ## Results
 ![GIFMaker_me track_5mb](https://github.com/user-attachments/assets/dd79e74f-5d6b-4252-9a35-46904ca5d765)
